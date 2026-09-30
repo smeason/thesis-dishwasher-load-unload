@@ -70,7 +70,26 @@ import dogsMsillm from "@/assets/dogs-msillm.jpg"
 
 ## Abstract
 
-This is a template you can use to create a professional-looking, accessible, and performant project page for your research paper. [See the code for the template and instructions on how to use it yourself on GitHub](https://github.com/RomanHauksson/academic-project-astro-template). It's made with the [Astro web framework](https://astro.build/) and styled with [Tailwind](https://tailwindcss.com/). You write the content in [MDX](https://mdxjs.com/), which enables markdown formatting like **bold**, _italics_, and ~strikethrough~, as well as custom components like <SmallCaps>small caps.</SmallCaps>
+This work presents a data-efficient, perception-driven framework for autonomous dishwasher
+loading and unloading using a mobile manipulator in simulation. The proposed system
+targets the structured yet challenging task of placing diverse tableware (i.e. cups, mugs,
+teacups, and plates) into a dishwasher rack under realistic kitchen conditions. We investigate
+the effectiveness of end-to-end visual pose regression compared to a modular pipeline that
+integrates learned perception with geometric reasoning. Experimental results show that
+directly predicting object placement poses from image-based models is unreliable in lowdata regimes due to the need to jointly learn viewpoint invariance, occupancy reasoning,
+spatial transformations, and placement preferences.
+To address these challenges, we introduce a structured approach that first estimates rack
+occupancy using a PointNet++-based segmentation model, and subsequently selects feasible
+placements using prior knowledge of rack geometry encoded through RANSAC-based fitting
+and heuristic pruning. From successful experiments, we demonstrate the effectiveness of
+decomposing the task into intermediate representations. Additionally, we create a synthetic
+RGB-D dataset of partially loaded dishwasher configurations.
+The results illustrate that modular, perception-first pipelines are strong in following rack
+structure and are robust to viewing angle, which end-to-end learning approaches struggle
+with under limited data. However, the system remains sensitive to depth quality, exhibits
+reduced performance under out-of-distribution configurations, and relies on assumptions
+about rack geometry that may limit generalization. These findings highlight the importance
+of integrating learned models with structural priors.
 
 </HighlightedSection>
 

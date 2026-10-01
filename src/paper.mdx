@@ -34,10 +34,22 @@ import outside from "./assets/outside.mp4";
 import dogsDiffc from "./assets/dogs-diffc.png"
 import dogsTrue from "./assets/dogs-true.png"
 import dogsMsillm from "@/assets/dogs-msillm.jpg"
+import CustomCNNDiagram from "./assets/Custom_CNN_diagram.png"
+import DishwasherSpawning from "./assets/DishwasherSpawning.png"
+import DirectPoseRegressionPipeline from "./assets/DirectPoseRegressionPipeline.png"
+import DishwasherPickingPipeline from "./assets/DishwasherPickingPipeline.png"
+import DishwasherSpawning from "./assets/"
+import ContactGraspNet from "./assets/FigContactGraspNet.png"
+import FigMobileManipulatorDiagram from "./assets/FigMobileManipulatorDiagram.png"
+import FigRobotEnvironmentandObjects from "./assets/FigRobotEnvironmentandObjects.png"
+import FigSAM3_example_seg from "./assets/FigSAM3_example_seg.png"
+import PointNetDishwasherLoading from "./assets/PointNetDishwasherLoading.png"
+import datasetSampleBottomColour from "./assets/dataset/dataset_bot_rack_1.png"
+import datasetSampleBottomDepth from "./assets/dataset/dataset_bot_rack_1_depth.png"
+import datasetSampleMidColour from "./assets/dataset/dataset_mid_rack_0_rgb.png"
+import datasetSampleMidDepth from "./assets/dataset/dataset_mid_rack_0.png"
+import pointNetArchitecture from "./assets/Pointnet++.png"
 
-
-import robotDesign from ""
-import datasetSample from ""
 
 <Header
   title="Automatic robot for dishwasher loading and unloading"
@@ -151,7 +163,7 @@ given the point cloud and segmented point cloud.
 6. Grasps are filtered to exclude grasps that are too close to the rack walls.
 7. Grasp with highest confidence score is executed with RRT* motion planning.
 
-<Picture src={figure11}>
+<Picture src={DishwasherPickingPipeline} alt="DishwasherPickingPipeline"/>
 
 
 Placing/loading (find goal object pose, motion planning of EE and object to goal pose)
@@ -177,7 +189,7 @@ Robocasa which is built on top of Mujoco. A realistic dishwasher model is used.
 ### Robot Design
 Omron LD-60 mobile base with Panda arm (7-DoF) and parallel gripper, end-effector camera, camera on base,
 2D-LiDAR.
-<Picture src={dogsDiffc}>
+<Picture src={FigMobileManipulatorDiagram} alt="FigMobileManipulatorDiagram"/>
 
 
 
@@ -186,7 +198,7 @@ Random angles, random dishwasher configurations (empty to full with tableware).
 1800 RGB-D images, 480x480. For dishwasher loading, ground truth labels are manually created
 for preferred positions.
 
-<Picture src={datasetSample}>
+<Picture src={datasetSampleBottomColour} alt="datasetSampleBottomColour"/>
 
 
 ### Dishwasher Loading
@@ -200,11 +212,11 @@ Two Methods are tested: 1) Direct pose regression with Neural Network
 Goal: direct placement pose of a tableware in hand (6-DoF pose) with a NN.
 For the NN, ResNet-34, ConvNeXt-Medium, DINOv2 and PointNet++ are evaluated.
 
-<Picture src={Figure10} alt="Neural network design for tableware placement pose prediction.">
+<Picture src={Custom_CNN_diagram} alt="Neural network design for tableware placement pose prediction."/>
 
-<Picture src={Figure12} alt="Dishwasher loading pipeline architecture using direct pose regression from RGBD image(s). After the model predicting pose in the rack, there are two extra transformation
+<Picture src={DirectPoseRegressionPipeline} alt="Dishwasher loading pipeline architecture using direct pose regression from RGBD image(s). After the model predicting pose in the rack, there are two extra transformation
 steps. First is to transform it into the robot base frame. Second is to calculate a small offset
-pose of the EE depending on the object pose in-hand.">
+pose of the EE depending on the object pose in-hand."/>
 
 
 #### Dishwasher Loading with Rack modeling
@@ -212,7 +224,7 @@ pose of the EE depending on the object pose in-hand.">
 Combatting the difficulty of direct pose regression and using the standard structure of dishwasher
 racks, we try to gain knowledge of the rack structure to do informed loading.
 
-<Picture src={Figure16} alt="Full architecture for dishwasher loading with rack modeling.">
+<Picture src={PointNetDishwasherLoading} alt="Full architecture for dishwasher loading with rack modeling."/>
 
 Step 1 - Rack Modeling: getting a detailed point cloud of the entire dishwasher rack
   We try to get an understanding of where the walls, floor, and supports are.
@@ -229,7 +241,7 @@ Step 2 - Live occupancy prediction with Point Cloud Model
   fine-tuned on custom generated dataset.
 
 [[Optional Figure]]
-<Picture src={Fig4} alt="PointNet++ architecture">
+<Picture src={pointNetArchitecture} alt="PointNet++ architecture" />
 
 Step 3 - Final Placement Prediction
   Using the multi-class semantic segmentation of the rack, we classify which possible

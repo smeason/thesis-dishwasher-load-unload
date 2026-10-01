@@ -35,6 +35,10 @@ import dogsDiffc from "./assets/dogs-diffc.png"
 import dogsTrue from "./assets/dogs-true.png"
 import dogsMsillm from "@/assets/dogs-msillm.jpg"
 
+
+import robotDesign from ""
+import datasetSample from ""
+
 <Header
   title="Automatic robot for dishwasher loading and unloading"
   conference="Thesis"
@@ -78,12 +82,14 @@ the effectiveness of end-to-end visual pose regression compared to a modular pip
 integrates learned perception with geometric reasoning. Experimental results show that
 directly predicting object placement poses from image-based models is unreliable in lowdata regimes due to the need to jointly learn viewpoint invariance, occupancy reasoning,
 spatial transformations, and placement preferences.
+
 To address these challenges, we introduce a structured approach that first estimates rack
 occupancy using a PointNet++-based segmentation model, and subsequently selects feasible
 placements using prior knowledge of rack geometry encoded through RANSAC-based fitting
 and heuristic pruning. From successful experiments, we demonstrate the effectiveness of
 decomposing the task into intermediate representations. Additionally, we create a synthetic
 RGB-D dataset of partially loaded dishwasher configurations.
+
 The results illustrate that modular, perception-first pipelines are strong in following rack
 structure and are robust to viewing angle, which end-to-end learning approaches struggle
 with under limited data. However, the system remains sensitive to depth quality, exhibits
@@ -93,13 +99,147 @@ of integrating learned models with structural priors.
 
 </HighlightedSection>
 
+## Intro / Context
+
+Robotics research is limited with dishwasher loading and unloading due to the difficulty of
+dealing with fine structure and the necessity of manuvering fragile objects accurately and precisely.
+Moreover, there is great pose variety in the unloading as well as self-occlusion of dishware.
+
+There are two main tasks that are tackled. 1. We consider a simple table settling plan, and then
+the robot navigates to the dishwasher and picks out appropriate tableware from the dishwasher rack
+and finally places them on the table. 2. Clearing a table by picking tableware off the table and
+loading them into the dishwasher.
+
+The system relies on RGD-D for scene understanding (mainly dishwasher and associated objects), and LiDAR
+for navigation. Minimal privilged information about the environment is given.
+
 ## Visuals
 
-### Image
+### Environment, Setup, and Robot
 
 Use the `Picture` component to display images. If you have a figure in PDF format, you can pass in its path as the `src` prop and it will be converted into a web-friendly image automatically.
 
 <Picture src={dogsDiffc} alt="Photo of two running dogs, lossily compressed using the DiffC algorithm" />
+
+## Architecture
+
+Perception
+YOLO-World used for navigation and localization of key furniture
+SAM3 for segmenting dishwasher racks and tableware
+Point-Net++
+
+Motion Planning
+RRT* and cubic spline interpolation
+
+Grasp estimation
+Contact-GraspNet
+
+### Picking
+Architecture shown in figure 11. Assumes robot already opened dishwasher door and a target
+object type is known (e.g. a mug).
+1. Based on a standard mapping of object type to rack, the bottom, middle, or upper
+rack is chosen.
+2. The rack is pulled out based on techniques described in 6.1.
+23
+3. The robot takes one or two RGB-D images of the rack (looking towards the centre of
+the rack) using the EE camera or base camera. The RGB-D are combined into one
+point cloud (if applicable), and the background points are cropped out if they are too
+close or too far.
+4. The target object is segmented from one or two RGB images using SAM 3.
+5. Contact grasp-net is used to predict best grasp candidates of the segmented object,
+given the point cloud and segmented point cloud.
+6. Grasps are filtered to exclude grasps that are too close to the rack walls.
+7. Grasp with highest confidence score is executed with RRT* motion planning.
+
+<Picture src={figure11}>
+
+
+Placing/loading (find goal object pose, motion planning of EE and object to goal pose)
+1st method: 
+- pose preidction with PoseCNN
+- predict best tableware placement pose with custom CNN
+- place according to goal pose with motion planning a few centimeters above desired spot and drop
+
+2nd method:
+- During first deployment, form a complete point cloud of dishwasher racks and detect
+important support structures.
+  - Generate possible placement slots and positions based on standard dishware dimensions.
+- During real-time deployment, predict pose of held object
+- Predict occupied positions in the rack using a Pointnet type architecture.
+- Predict best available position in rack based on occupied positions and generated possible placement positions.
+- Place according to goal pose (same as method 1).
+
+Global navigation
+
+### Simulation
+Robocasa which is built on top of Mujoco. A realistic dishwasher model is used.
+
+### Robot Design
+Omron LD-60 mobile base with Panda arm (7-DoF) and parallel gripper, end-effector camera, camera on base,
+2D-LiDAR.
+<Picture src={dogsDiffc}>
+
+
+
+### Dataset creation
+Random angles, random dishwasher configurations (empty to full with tableware).
+1800 RGB-D images, 480x480. For dishwasher loading, ground truth labels are manually created
+for preferred positions.
+
+<Picture src={datasetSample}>
+
+
+### Dishwasher Loading
+
+(Considered approaches: RL, Supervised Learning (behaviour cloning))
+Two Methods are tested: 1) Direct pose regression with Neural Network
+2) Explicit rack modeling and occupancy prediction by Point Cloud Neural Network.
+
+
+#### Dishwasher loading by Direct Pose regression
+Goal: direct placement pose of a tableware in hand (6-DoF pose) with a NN.
+For the NN, ResNet-34, ConvNeXt-Medium, DINOv2 and PointNet++ are evaluated.
+
+<Picture src={Figure10} alt="Neural network design for tableware placement pose prediction.">
+
+<Picture src={Figure12} alt="Dishwasher loading pipeline architecture using direct pose regression from RGBD image(s). After the model predicting pose in the rack, there are two extra transformation
+steps. First is to transform it into the robot base frame. Second is to calculate a small offset
+pose of the EE depending on the object pose in-hand.">
+
+
+#### Dishwasher Loading with Rack modeling
+
+Combatting the difficulty of direct pose regression and using the standard structure of dishwasher
+racks, we try to gain knowledge of the rack structure to do informed loading.
+
+<Picture src={Figure16} alt="Full architecture for dishwasher loading with rack modeling.">
+
+Step 1 - Rack Modeling: getting a detailed point cloud of the entire dishwasher rack
+  We try to get an understanding of where the walls, floor, and supports are.
+  This is whole process is done with ICP, RANSAC plane fitting, and RANSAC for support 
+  searching.
+
+Step 1b - Getting candidate loading spots for different tableware types.
+  For example for plates, we do an iterative search for rectangles using the supports
+  as corners or edges.
+
+Step 2 - Live occupancy prediction with Point Cloud Model
+  PointNet++ model is trained to do a multi-class semantic segmentation on the 
+  current point cloud model of the dishwasher rack. Pre-trained on ScanNet,
+  fine-tuned on custom generated dataset.
+
+[[Optional Figure]]
+<Picture src={Fig4} alt="PointNet++ architecture">
+
+Step 3 - Final Placement Prediction
+  Using the multi-class semantic segmentation of the rack, we classify which possible
+  placement positions of the rack are occupied or not (occupied if past a density threshold).
+  Final placement position is chosen based on closeness to object of same type, or closeness
+  to the robot. 
+
+## Results
+
+
 
 ### Video
 
